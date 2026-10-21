@@ -1,0 +1,9 @@
+{
+  "name": "vsat-sim",
+  "private": true,
+  "type": "module",
+  "engines": { "node": ">=20" },
+  "dependencies": {
+    "@anthropic-ai/sdk": ">=0.71.0"
+  }
+}
