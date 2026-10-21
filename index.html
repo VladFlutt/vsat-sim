@@ -157,6 +157,15 @@ details summary{cursor:pointer;font-weight:600}
 .thfigs img,.thfigs svg{width:100%;height:auto;max-height:300px;object-fit:contain;background:var(--bg);border:1px solid var(--line);border-radius:4px}
 .thfigs img{cursor:zoom-in;background:#fff}.thfigs figcaption{font-size:12px;color:var(--muted)}
 .zoom{position:fixed;inset:0;z-index:50;background:rgba(0,0,0,.82);display:grid;place-items:center;padding:16px;cursor:zoom-out}.zoom img{max-width:100%;max-height:100%;background:#fff;border-radius:4px}
+/* AI */
+.aigrid{display:grid;grid-template-columns:minmax(0,1.3fr) minmax(0,1fr);gap:12px;margin-top:12px}
+@media (max-width:900px){.aigrid{grid-template-columns:1fr}}
+.aichat{height:340px}
+.aitext{white-space:pre-wrap;font-size:13px;line-height:1.5}
+.aibox{border:1px solid var(--line);border-left:3px solid var(--accent);border-radius:4px;padding:10px 12px;background:var(--bg);display:flex;flex-direction:column;gap:8px;margin-top:10px}
+.aiform{display:flex;gap:6px;flex-wrap:wrap}.aiform textarea{flex:1;min-width:200px;font:inherit;font-size:13px;padding:6px;border:1px solid var(--line);border-radius:4px;background:var(--panel);color:var(--ink);resize:vertical}
+.aiprev{max-width:100%;max-height:220px;object-fit:contain;border:1px solid var(--line);border-radius:4px;background:#fff}
+.aibadge{font-size:11px;font-weight:700;letter-spacing:.04em;color:var(--accent);text-transform:uppercase}
 </style>
 
 <div class="wrap">
@@ -181,6 +190,7 @@ details summary{cursor:pointer;font-weight:600}
     <button role="tab" data-tab="p8">П8 + П9. Точная настройка и поляризация с ЦУС</button>
     <button role="tab" data-tab="p10">П10. Диагностика</button>
     <button role="tab" data-tab="ex">Экзамен</button>
+    <button role="tab" data-tab="ai">ИИ-инструктор</button>
   </nav>
 
   <div id="tab-p8">
@@ -438,6 +448,40 @@ details summary{cursor:pointer;font-weight:600}
       <h2 style="margin-top:14px">3. Сертификат</h2>
       <div id="ex-cert"></div>
     </section>
+  </div>
+  </div>
+  <div id="tab-ai" hidden>
+  <div class="order"><div style="grid-column:1/-1"><b>ИИ-инструктор.</b> Отвечает на вопросы по курсу, разбирает завершённые наряды, проверяет фото реального монтажа и составляет план подготовки. Работает на модели Claude и опирается на теорию и порядок работ этого тренажёра. Ответы ИИ носят учебный характер: окончательное решение на объекте принимают ЦУС и инструктор.</div></div>
+  <div class="aigrid">
+    <section class="pane" aria-label="Вопрос инструктору">
+      <h2>Вопрос инструктору</h2>
+      <div class="chat aichat" id="ai-chat" aria-live="polite"></div>
+      <form class="aiform" id="ai-form">
+        <textarea id="ai-q" rows="2" maxlength="2000" placeholder="Например: почему болты ODU затягивают только после команды ЦУС?"></textarea>
+        <button class="primary" type="submit" id="ai-send">Спросить</button>
+      </form>
+      <p class="note">Разбор каждого завершённого наряда появляется под его итогом: кнопка «Разбор ИИ-инструктора».</p>
+    </section>
+    <div style="display:flex;flex-direction:column;gap:12px;min-width:0">
+      <section class="pane" aria-label="Проверка монтажа по фото">
+        <h2>Проверка монтажа по фото</h2>
+        <div class="row">
+          <label class="note" for="ai-kind">Узел</label>
+          <select id="ai-kind"><option value="antenna">Антенна, опора и крепёж</option><option value="cable">Разделка кабеля и F-разъём</option><option value="ground">Заземление и питание</option><option value="modem">Индикаторы и экран модема</option></select>
+        </div>
+        <input type="file" id="ai-file" accept="image/jpeg,image/png,image/webp">
+        <img id="ai-prev" class="aiprev" alt="Загруженное фото" hidden>
+        <input type="text" id="ai-comment" maxlength="300" placeholder="Комментарий (необязательно)">
+        <div class="row"><button class="primary" id="ai-photo" disabled>Проверить фото</button></div>
+        <div class="aitext" id="ai-photo-out"></div>
+      </section>
+      <section class="pane" aria-label="Персональный план">
+        <h2>Персональный план подготовки</h2>
+        <p class="note">ИИ смотрит результаты тестов и практик в этом браузере и подсказывает, что повторить перед экзаменом.</p>
+        <div class="row"><button class="primary" id="ai-plan">Составить план</button></div>
+        <div class="aitext" id="ai-plan-out"></div>
+      </section>
+    </div>
   </div>
   </div>
   <div id="tab-p4" hidden>
@@ -1251,7 +1295,7 @@ function actPic(st){
 function render(){cableSVG();oduSVG();stepsUI();work();actPic(T.stage);}
 
 // ---------- tabs ----------
-function tab(t){document.body.dataset.tab=t;["th","p3","p4","p5","p6","p8","p10","ex"].forEach(x=>$("tab-"+x).hidden=x!==t);
+function tab(t){document.body.dataset.tab=t;["th","p3","p4","p5","p6","p8","p10","ex","ai"].forEach(x=>$("tab-"+x).hidden=x!==t);
   document.querySelectorAll(".tabs button").forEach(b=>b.classList.toggle("cur",b.dataset.tab===t));try{localStorage.setItem("vsat-tab",t);}catch(e){}}
 document.querySelectorAll(".tabs button").forEach(b=>b.onclick=()=>tab(b.dataset.tab));
 $("mode").addEventListener("change",()=>{if(T)render();});
@@ -2024,6 +2068,93 @@ window.thstart=()=>open(cur);
 $("th-body").addEventListener("click",e=>{const im=e.target.closest("img[data-zoom]");if(!im)return;const z=document.createElement("div");z.className="zoom";z.setAttribute("role","dialog");z.innerHTML=`<img src="${im.src}" alt="${im.alt}">`;z.onclick=()=>z.remove();document.addEventListener("keydown",function k(ev){if(ev.key==="Escape"){z.remove();document.removeEventListener("keydown",k);}});document.body.appendChild(z);});
 let c0="m1";try{c0=localStorage.getItem("vsat-th-cur")||"m1";}catch(e){}
 open(M.some(x=>x[0]===c0)?c0:"m1");
+})();
+</script>
+<script>
+// ---------- ИИ-инструктор (Claude через /api/ai) ----------
+(()=>{
+"use strict";
+const $=id=>document.getElementById(id);
+const NAMES={p3:"П3. Сборка антенны",p4:"П4. Разделка кабеля и F-разъём",p5:"П5. Заземление и питание",p6:"П1 + П6. Расчёт и грубое наведение",p8:"П8 + П9. Точная настройка и поляризация с ЦУС",p10:"П10. Диагностика"};
+const ids=id=>id==="p8"?{log:"log",res:"result",steps:"steps"}:{log:id+"-log",res:id+"-result",steps:id+"-steps"};
+async function ask(body){
+  let r;
+  try{r=await fetch("/api/ai",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify(body)});}
+  catch(e){throw new Error("Нет связи с сервером ИИ. ИИ-функции работают на опубликованном сайте.");}
+  let j={};try{j=await r.json();}catch(e){}
+  if(!r.ok)throw new Error(j.error||("Ошибка "+r.status));
+  return j.text||"";
+}
+function busy(btn,on,label){btn.disabled=on;if(on){btn.dataset.l=btn.textContent;btn.textContent=label||"ИИ думает…";}else if(btn.dataset.l)btn.textContent=btn.dataset.l;}
+
+// 1. Разбор наряда
+document.addEventListener("vsat-result",e=>{
+  const {id,pass,exam}=e.detail,I=ids(id),res=$(I.res);if(!res)return;
+  const box=document.createElement("div");box.className="aibox";
+  box.innerHTML=`<span class="aibadge">ИИ-инструктор</span><div class="row"><button class="primary">Разбор ИИ-инструктора</button></div><div class="aitext"></div>`;
+  res.append(box);
+  const btn=box.querySelector("button"),out=box.querySelector(".aitext");
+  btn.onclick=async()=>{
+    const log=[...($(I.log)?.children||[])].map(d=>d.textContent);
+    if(id==="p8")[...($("chat")?.children||[])].forEach(d=>log.push("Связь с ЦУС: "+d.textContent));
+    const steps=[...($(I.steps)?.querySelectorAll("li.done")||[])].map(li=>li.textContent);
+    const result=res.innerText.replace(box.innerText,"").trim();
+    busy(btn,true);out.textContent="";
+    try{out.textContent=await ask({task:"debrief",practice:NAMES[id]||id,pass,exam,log,steps,result});btn.hidden=true;}
+    catch(err){out.textContent=err.message;}
+    finally{busy(btn,false);}
+  };
+});
+
+// 2. Консультант
+const hist=[];
+function bubble(who,text){const d=document.createElement("div");d.className="msg "+(who==="user"?"me":who==="sys"?"sys":"noc");
+  if(who!=="sys"){const b=document.createElement("b");b.textContent=who==="user"?"Монтажник":"ИИ-инструктор";d.append(b);}
+  const t=document.createElement("div");t.className="aitext";t.textContent=text;d.append(t);$("ai-chat").append(d);$("ai-chat").scrollTop=1e6;return d;}
+bubble("sys","Задайте вопрос по монтажу и настройке VSAT. Инструктор отвечает по материалам курса.");
+$("ai-form").onsubmit=async ev=>{
+  ev.preventDefault();const q=$("ai-q").value.trim();if(!q)return;
+  $("ai-q").value="";bubble("user",q);hist.push({role:"user",content:q});
+  const wait=bubble("sys","ИИ-инструктор думает…");busy($("ai-send"),true,"…");
+  try{const a=await ask({task:"chat",messages:hist});wait.remove();bubble("ai",a);hist.push({role:"assistant",content:a});}
+  catch(err){wait.remove();hist.pop();bubble("sys",err.message);}
+  finally{busy($("ai-send"),false);}
+};
+$("ai-q").addEventListener("keydown",e=>{if(e.key==="Enter"&&!e.shiftKey){e.preventDefault();$("ai-form").requestSubmit();}});
+
+// 3. Проверка по фото: уменьшаем до 1600 px и отправляем JPEG
+let photo=null;
+$("ai-file").onchange=()=>{
+  const f=$("ai-file").files[0];photo=null;$("ai-photo").disabled=true;$("ai-photo-out").textContent="";
+  if(!f)return;
+  const img=new Image(),url=URL.createObjectURL(f);
+  img.onload=()=>{const k=Math.min(1,1600/Math.max(img.width,img.height)),c=document.createElement("canvas");
+    c.width=Math.round(img.width*k);c.height=Math.round(img.height*k);c.getContext("2d").drawImage(img,0,0,c.width,c.height);
+    const d=c.toDataURL("image/jpeg",0.85);photo=d.split(",")[1];$("ai-prev").src=d;$("ai-prev").hidden=false;$("ai-photo").disabled=false;URL.revokeObjectURL(url);};
+  img.onerror=()=>{$("ai-photo-out").textContent="Не удалось открыть файл как изображение.";};
+  img.src=url;
+};
+$("ai-photo").onclick=async()=>{
+  if(!photo)return;busy($("ai-photo"),true);$("ai-photo-out").textContent="";
+  try{$("ai-photo-out").textContent=await ask({task:"photo",kind:$("ai-kind").value,comment:$("ai-comment").value,media_type:"image/jpeg",image:photo});}
+  catch(err){$("ai-photo-out").textContent=err.message;}
+  finally{busy($("ai-photo"),false);}
+};
+
+// 4. Персональный план
+$("ai-plan").onclick=async()=>{
+  const get=k=>{try{return JSON.parse(localStorage.getItem(k)||"{}")||{};}catch(e){return {};}};
+  const th=get("vsat-th"),ex=get("vsat-exam");
+  const titles=[...document.querySelectorAll("#th-list a")].reduce((o,a)=>(o[a.dataset.m]=a.textContent,o),{});
+  const progress={
+    "тесты по модулям (порог 80%)":Object.keys(titles).map(m=>({модуль:titles[m],результат:th[m]?th[m].pct+"%":"не сдавал"})),
+    "итоговый тест":ex.theory?ex.theory.pct+"%":"не сдавал",
+    "практики, зачтённые в режиме экзамена":Object.keys(NAMES).map(p=>({практика:NAMES[p],зачёт:ex.prac&&ex.prac[p]?"да, "+ex.prac[p]:"нет"}))};
+  busy($("ai-plan"),true);$("ai-plan-out").textContent="";
+  try{$("ai-plan-out").textContent=await ask({task:"plan",progress});}
+  catch(err){$("ai-plan-out").textContent=err.message;}
+  finally{busy($("ai-plan"),false);}
+};
 })();
 </script>
 
